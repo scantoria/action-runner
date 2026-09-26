@@ -2,6 +2,8 @@
 set -euo pipefail
 
 required_vars=(GITHUB_OWNER GITHUB_REPOSITORY RUNNER_TOKEN)
+runner_configured=false
+runner_pid=""
 
 for var_name in "${required_vars[@]}"; do
     if [[ -z "${!var_name:-}" ]]; then
@@ -16,11 +18,25 @@ runner_workdir="${RUNNER_WORKDIR:-_work}"
 repo_url="https://github.com/${GITHUB_OWNER}/${GITHUB_REPOSITORY}"
 
 cleanup() {
-    echo "Removing runner registration..."
-    ./config.sh remove --unattended --token "${RUNNER_TOKEN}" || true
+    if [[ -n "${runner_pid}" ]] && kill -0 "${runner_pid}" 2>/dev/null; then
+        echo "Stopping runner..."
+        kill -TERM "${runner_pid}" 2>/dev/null || true
+        wait "${runner_pid}" 2>/dev/null || true
+    fi
+
+    if [[ "${runner_configured}" == "true" ]]; then
+        echo "Removing runner registration..."
+        ./config.sh remove --unattended --token "${RUNNER_TOKEN}" || true
+    fi
 }
 
-trap cleanup EXIT INT TERM
+handle_signal() {
+    cleanup
+    exit 0
+}
+
+trap handle_signal INT TERM
+trap cleanup EXIT
 
 ./config.sh \
     --unattended \
@@ -31,4 +47,8 @@ trap cleanup EXIT INT TERM
     --work "${runner_workdir}" \
     --replace
 
-exec ./run.sh
+runner_configured=true
+
+./run.sh &
+runner_pid="$!"
+wait "${runner_pid}"

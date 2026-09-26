@@ -1,0 +1,22 @@
+services:
+  runner:
+    build:
+      context: .
+      args:
+        RUNNER_VERSION: "2.328.0"
+    image: thisbyte/actions-runner:2.328.0
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      GITHUB_OWNER: ${GITHUB_OWNER:-scantoria}
+      GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:-thisbyte-website}
+      RUNNER_NAME: ${RUNNER_NAME:-thisbyte-hp-runner}
+      RUNNER_LABELS: ${RUNNER_LABELS:-self-hosted,linux,x64,thisbyte}
+      RUNNER_WORKDIR: ${RUNNER_WORKDIR:-_work}
+    volumes:
+      - runner-work:/actions-runner/_work
+
+volumes:
+  runner-work:

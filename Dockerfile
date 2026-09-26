@@ -9,16 +9,12 @@ RUN apt-get update \
         ca-certificates \
         curl \
         git \
-        jq \
-        openssh-client \
-        sudo \
-        tar \
         gzip \
-        unzip \
+        tar \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --shell /bin/bash runner \
-    && mkdir -p /actions-runner /home/runner/.ssh \
+    && mkdir -p /actions-runner \
     && chown -R runner:runner /actions-runner /home/runner
 
 WORKDIR /actions-runner
