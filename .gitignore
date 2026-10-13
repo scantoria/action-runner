@@ -5,3 +5,6 @@
 *.pem
 credentials/
 _work/
+runner-state/
+.runner
+.credentials*

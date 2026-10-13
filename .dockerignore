@@ -6,3 +6,9 @@ credentials/
 _work/
 *.key
 *.pem
+_Context/
+Docs/
+tests/
+runner-state/
+.runner
+.credentials*

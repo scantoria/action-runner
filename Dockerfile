@@ -10,11 +10,16 @@ RUN apt-get update \
         curl \
         git \
         gzip \
+        libicu74 \
+        python3 \
         tar \
+        util-linux \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --shell /bin/bash runner \
-    && mkdir -p /actions-runner \
+    && mkdir -p /actions-runner /runner-state \
+    && chmod 700 /runner-state \
+    && chown runner:runner /runner-state \
     && chown -R runner:runner /actions-runner /home/runner
 
 WORKDIR /actions-runner
@@ -28,6 +33,7 @@ RUN curl -fsSL \
     && chown -R runner:runner /actions-runner
 
 COPY --chown=runner:runner --chmod=755 entrypoint.sh /entrypoint.sh
+COPY --chown=runner:runner --chmod=755 validate-state.py /validate-state.py
 
 USER runner
 
