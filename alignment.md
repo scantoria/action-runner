@@ -1,4 +1,4 @@
-**Version:** 1.0.0-20260922-1430
+**Version:** 1.0.1-20260929-1239
 
 ## 0\. Companion Document
 
@@ -12,9 +12,11 @@ This file must be read alongside project-specification.md, located in the same p
 
 **Area of Operation:** See project-specification.md Section 0\. No searching, reading, or writing outside that boundary.
 
+**Artifact locations:** \_Context/Executions/ is the primary location for execution-related artifacts — implementation prompts/instructions, implementation walkthroughs, execution evidence, correction/remediation execution artifacts, and Implementation Tool completion/handoff evidence. \_Context/Reviews/ is the primary location for independent review artifacts — QA reviews, code peer reviews, re-reviews, correction/remediation reviews, and formal review dispositions. \_Context/Sessions/ remains the location for session context, session continuity records, historical/session summaries, and other session-oriented context that is not itself an implementation execution artifact or an independent review artifact (for example, IRP incident entries, per the IRP sync rule below). All three remain subject to the same Artifact Integrity rule (Section 6): saved, durable files only, never edited in place once created.
+
 **Scoping flow:** the platform performing the Chief Architect role drafts the Scope, Phases, and Sprints document and the detailed work-package scope, and relays each work package to the Owner. The platform performing the Project Manager role tracks the status and sequencing of that scope, it does not originate it.
 
-**Handoff rule:** Avoid switching implementation platforms in the middle of an indivisible change whenever practical. Before a handoff, and at the completion of every work package regardless of whether a platform switch occurs, the platform performing the Implementation Tool role must produce a handoff artifact, placed in \_Context/Sessions/. The artifact must cover:
+**Handoff rule:** Avoid switching implementation platforms in the middle of an indivisible change whenever practical. Before a handoff, and at the completion of every work package regardless of whether a platform switch occurs, the platform performing the Implementation Tool role must produce a handoff artifact, placed in \_Context/Executions/ (see Artifact locations, above). The artifact must cover:
 
 - Completed work (files created/modified, by name)  
 - Remaining acceptance criteria, stated explicitly even if none remain  
@@ -56,7 +58,7 @@ Roles are functions, not seats. Any capable platform self-onboards into a role t
 
 - *Authorized:* reviewing completed work against the work-package scope and this file's constraints; concluding with a disposition (APPROVED / APPROVED WITH ADVISORIES / CHANGES REQUIRED); flagging governance or architecture violations.  
 - *Not authorized:* merging, deploying, or self-approving its own suggested changes; changing scope (a scope change requires a revised work package from whichever platform is currently performing the Chief Architect role).  
-- *Required:* every review is delivered as a saved, durable artifact, not conversational text alone (see Section 6, Artifact Integrity).
+- *Required:* every review is delivered as a saved, durable artifact, placed in \_Context/Reviews/ (see Artifact locations, Section 1), not conversational text alone (see Section 6, Artifact Integrity).
 
 ## 3\. Evidence & Verification Standard
 

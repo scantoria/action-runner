@@ -3,10 +3,49 @@
 **Project:** action-runner\
 **Organization:** ThisByte LLC\
 **Document:** Project Specification\
-**Status:** Draft for Review\
-**Date:** 2026-09-25\
+**Version:** Revision 2\
+**Status:** Reconciled Specification — Pending Owner and Chief Architect Review\
+**Date:** 2026-10-12\
+**Revision Authority:** Implementation Tool — Owner-authorized project-specification update\
 **Project Root:** `C:\Development\action-runner`\
-**Target GitHub Repository:** `scantoria/thisbyte-website`
+**Project Source Repository:** `scantoria/action-runner`\
+**Initial Repository Served by the Runner:** `scantoria/thisbyte-website`
+
+This revision incorporates the Owner-approved WP-0.2 architecture from
+`_Context/Work-Packages/WP-0.2-Runner-Lifecycle-Registration-Design.md` and
+the authorized, paused WP-0.3 scope from
+`_Context/Work-Packages/WP-0.3-Runner-Lifecycle-Implementation-Remediation.md`.
+It does not authorize implementation, registration, credential acquisition,
+or deployment. WP-0.3 remains paused pending Owner and Chief Architect
+review of this reconciled specification.
+
+------------------------------------------------------------------------
+
+## 0. Project Identity and Area of Operation
+
+**Governance update authority:** Implementation Tool, executing the Owner-authorized governance update on 2026-10-12.
+
+**Project ID:** `AR`
+
+The Project ID is used for project-scoped governance artifacts that require
+an identifier, including Incident Resolution and Prevention (IRP) filenames defined
+by `alignment.md`.
+
+IRP files use the following naming convention:
+
+`IRP-AR-NNN.md`
+
+where `NNN` is a zero-padded sequential incident number beginning with `001`.
+IRP files are stored in `_Context/Sessions/` in accordance with
+`alignment.md`.
+
+**Project Name:** ThisByte Action Runner
+
+**Project Root / Area of Operation:** `C:\Development\action-runner`
+
+The Area of Operation consists of the project root and its subdirectories.
+No searching, reading, or writing outside this boundary is authorized unless
+the Owner explicitly grants an exception.
 
 ------------------------------------------------------------------------
 
@@ -30,7 +69,7 @@ application source code and shall remain independently maintainable.
 
 The project shall:
 
-1.  Provide a containerized GitHub Actions self-hosted runner.
+1.  Provide a containerized, persistent GitHub Actions self-hosted runner.
 2.  Keep runner configuration reproducible as code.
 3.  Execute the runner as an unprivileged Linux user.
 4.  Establish a controlled trust boundary between GitHub Actions and the
@@ -50,10 +89,27 @@ The project shall:
 
 ## 3. Current Project State
 
-At the time of this specification, an initial runner implementation has
-been created and locally validated.
+### 3.1 Current Governance and Work-Package State — 2026-10-12
 
-Completed:
+-   WP-0.1 baseline implementation/review is complete. This does not
+    establish completion of the lifecycle remediation or operational acceptance.
+-   WP-0.2 Runner Lifecycle & Registration Design is Owner-approved
+    as of 2026-10-12 and establishes the persistent-runner architecture.
+-   WP-0.3 Runner Lifecycle Implementation / Remediation is authorized
+    as the next implementation stage, but remains paused until this
+    specification reconciliation is completed and reviewed by the Owner
+    and Chief Architect.
+-   Runner registration has not been authorized.
+-   Acquisition or use of a registration token or PAT has not been authorized.
+-   Deployment credentials have not been authorized.
+-   `station-01` access, modification, and deployment remain outside
+    current authorization. Production deployment is not authorized.
+
+### 3.2 Historical Prototype Baseline — 2026-09-25
+
+The initial implementation was created and locally validated in September.
+The following are historical baseline facts, not claims of current
+WP-0.3 validation:
 
 -   Dockerfile created.
 -   `compose.yaml` created.
@@ -69,18 +125,23 @@ Completed:
 -   No inbound ports are exposed.
 -   Docker socket is not mounted.
 -   Container is not privileged.
--   Persistent storage is limited to the runner work directory.
+-   Prototype persistent storage was limited to the runner work directory;
+    WP-0.3 must replace that model with the approved Section 12 requirements.
 -   No GitHub runner token is currently present.
 -   Runner has not been registered with GitHub.
 -   No deployment SSH credentials have been created.
 -   No changes have been made to `station-01` as part of this project.
 
-### 3.1 Mandatory Current Hold Point
+### 3.3 Mandatory Current Hold Point
 
-The runner image may be built and locally validated, but the runner
+After specification review, WP-0.3 may implement and locally validate the
+approved lifecycle without credentials. This specification revision itself
+does not authorize that step. The runner
 **SHALL NOT be registered with GitHub and SHALL NOT receive deployment
-credentials until the applicable design, security, and
-credential-handling requirements are reviewed and approved.**
+credentials until the applicable design, security, and credential-handling
+requirements are reviewed and approved, and the Owner explicitly authorizes
+each respective operation.** Review approval alone does not authorize
+registration, token acquisition, or deployment credentials.
 
 The existing implementation is therefore considered a prototype
 implementation subject to review against this specification.
@@ -101,7 +162,8 @@ The initial project includes:
 -   GitHub runner registration and deregistration design.
 -   Runtime configuration.
 -   Secret-handling design.
--   Persistent runner workspace.
+-   Persistent runner registration/configuration state and separate,
+    disposable-by-default job workspace.
 -   Runner labeling and targeting.
 -   Repository-level runner integration.
 -   CI execution.
@@ -134,8 +196,14 @@ The following shall remain deferred until explicitly authorized:
 
 ### 5.1 Initial Architecture
 
+The initial architecture uses a **persistent**, repository-scoped GitHub
+Actions runner. Ephemeral runner operation is deferred unless separately
+approved in the future. The project's source repository is
+`scantoria/action-runner`; the initial repository served by the runner is
+`scantoria/thisbyte-website`.
+
 ``` text
-GitHub Repository
+Initial Repository Served by the Runner
 scantoria/thisbyte-website
         |
         | GitHub Actions
@@ -147,7 +215,7 @@ Docker Desktop / WSL2
         |
         v
 action-runner container
-(non-root Linux runner)
+(persistent, non-root Linux runner)
         |
         | future restricted SSH deployment
         v
@@ -155,7 +223,34 @@ station-01
 Ubuntu / nginx
 ```
 
-### 5.2 Trust Boundaries
+### 5.2 Approved Persistent-Runner Lifecycle
+
+``` text
+Explicit first bootstrap (only after separate Owner authorization)
+        |
+        v
+Registration/configuration state persisted
+        |
+        v
+Listener starts
+        |
+        v
+Normal shutdown stops listener without deregistration
+        |
+        v
+GitHub runner remains registered and appears Offline
+        |
+        v
+Restart uses persisted registration/configuration state
+        |
+        v
+Listener reconnects without a new registration token
+```
+
+GitHub Online/Offline transitions and actual reconnection are required
+registered-runner tests, not verified outcomes of this reconciliation.
+
+### 5.3 Trust Boundaries
 
 The architecture contains distinct trust boundaries:
 
@@ -213,8 +308,12 @@ The runner container SHALL:
 -   Contain only packages justified by runner operation or approved
     workflow requirements.
 -   Be reproducible from source-controlled configuration.
--   support graceful shutdown.
--   Support clean runner deregistration where technically possible.
+-   Support graceful listener shutdown without deregistration or
+    deletion of persisted registration/configuration state.
+-   Support controlled runner deregistration through a separate,
+    explicitly requested administrative decommission operation.
+-   Configure registration using `--disableupdate`; the running
+    container shall not silently self-update its runner binary.
 
 Current pinned runner version:
 
@@ -223,7 +322,9 @@ Current pinned runner version:
 ```
 
 A runner-version upgrade shall be treated as a controlled dependency
-update and validated before adoption.
+update, implemented through deliberate image/build version changes, and
+validated before adoption. The Docker image is the authoritative
+runner-version boundary.
 
 ------------------------------------------------------------------------
 
@@ -272,7 +373,9 @@ Filesystem permissions shall follow least privilege.
 
 ## 10. GitHub Scope
 
-Initial runner scope:
+Action Runner source repository: `scantoria/action-runner`.
+
+Initial repository served by the runner and intended runner scope:
 
 ``` text
 Owner:      scantoria
@@ -296,14 +399,19 @@ executing code on the local runner.
 
 Runner registration shall follow these principles:
 
--   Registration credentials shall be short-lived wherever supported.
+-   Registration shall use an authorized short-lived repository runner
+    registration token supplied at runtime for explicit bootstrap only.
 -   Registration credentials shall never be committed.
 -   Registration credentials shall never be baked into a Docker image.
 -   Secrets shall not be written to logs.
 -   Secrets shall not be included in `.env.example`.
--   Long-lived credentials shall not be introduced solely to automate
-    acquisition of short-lived credentials without explicit security
-    review.
+-   The token shall be used only when initial registration is actually
+    required; ordinary restart of a configured persistent runner shall
+    not require a registration token.
+-   The bootstrap token shall be discarded after configuration and
+    shall not be stored as normal persistent runner configuration.
+-   A long-lived PAT shall not be placed inside the runner merely to
+    acquire registration tokens.
 
 ### 11.2 `.env`
 
@@ -318,50 +426,100 @@ RUNNER_NAME=thisbyte-hp-runner
 RUNNER_LABELS=self-hosted,linux,x64,thisbyte
 ```
 
-The final mechanism for acquiring and supplying the GitHub registration
-token remains a design decision to be approved before registration.
+`RUNNER_TOKEN` shall not become permanent `.env` configuration.
+The high-level bootstrap-only token lifecycle is approved. The exact
+operator/API mechanism for obtaining the short-lived repository token
+remains deferred; WP-0.2 does not select an API, CLI, PAT, GitHub App,
+or other acquisition mechanism. The runner shall receive the authorized
+token as runtime bootstrap input only, not acquire it through an embedded
+long-lived credential.
 
-A short-lived registration token SHOULD NOT be treated as permanent
-project configuration.
+### 11.3 State-Aware Startup and Bootstrap
 
-### 11.3 Registration Lifecycle
+Startup shall validate non-secret configuration and distinguish:
 
-The final runner lifecycle shall support:
+1.  **Valid persisted registration/configuration state:** start the
+    listener using that state without a registration token.
+2.  **No state and bootstrap not explicitly requested:** fail closed
+    with a clear diagnostic; do not attempt registration automatically.
+3.  **Explicit bootstrap but required short-lived token absent:** fail
+    closed with a clear diagnostic.
+4.  **Partial, malformed, inconsistent, stale, or ambiguous local state:**
+    fail closed, preserve state and diagnostics, and require explicit
+    operator intervention. Do not silently repair, delete, replace,
+    overwrite, or re-register ambiguous state.
 
-1.  Validate required non-secret configuration.
-2.  Obtain or receive an authorized short-lived registration credential.
-3.  Configure the runner.
-4.  Start the runner.
-5.  Receive GitHub Actions jobs.
-6.  Handle SIGTERM/SIGINT cleanly.
-7.  Stop the runner process.
-8.  Attempt GitHub deregistration where appropriate.
-9.  Avoid exposing registration credentials during any lifecycle stage.
+Only explicitly requested, separately authorized bootstrap with absent
+state and a valid runtime token may configure the runner. Configuration
+shall use `--disableupdate`, persist complete registration/configuration
+state before listener startup, and discard the bootstrap token.
+Registration failure shall stop execution, preserve actionable diagnostics
+and any partial state, and never enter automatic registration loops.
+No lifecycle stage shall expose registration credentials.
 
-Container restart behavior and registration state shall be tested before
-the runner is considered operational.
+Automatic or silent use of `--replace` is prohibited. Stale or duplicate
+GitHub runner records and GitHub/local-state disagreement require deliberate
+administrative recovery, not deletion or replacement during ordinary startup.
+
+The restart policy, including any retention of `restart: unless-stopped`,
+shall not create destructive, credential-consuming, or uncontrolled
+registration retry loops. Failed bootstrap and invalid-state conditions
+shall remain diagnosable. WP-0.3 shall validate this behavior.
+
+### 11.4 Normal Shutdown and Restart
+
+`SIGTERM`, `SIGINT`, `docker stop`, Docker Desktop shutdown, WSL2 shutdown,
+and Windows host shutdown shall stop the listener cleanly where possible,
+without GitHub deregistration or deletion of persisted state. Shutdown
+handling shall be idempotent. The expected GitHub state is registered but
+Offline. Ordinary restart shall reuse valid persisted state and reconnect
+without a new registration token.
+
+### 11.5 Explicit Administrative Decommission
+
+Permanent runner removal is distinct from ordinary lifecycle events and
+requires intentional operator action and separate authorization. Controlled
+decommission shall deregister the GitHub runner identity before removing
+persisted local state. Partial decommission failure shall preserve enough
+information for recovery and diagnosis. Normal shutdown cannot enter this
+path. Decommission execution is not authorized by WP-0.3 or this revision.
+
+Registered lifecycle tests remain **DEFERRED** until separate Owner
+registration authorization. These include GitHub Online/Offline transitions,
+reconnection after container, Docker Desktop, WSL2, or Windows restart,
+abnormal host termination, stale-record handling against GitHub, controlled
+decommission/re-registration, and a harmless GitHub Actions CI job.
 
 ------------------------------------------------------------------------
 
 ## 12. Persistent Storage
 
-Persistent storage shall be minimized.
+Persistent storage shall be minimized while intentionally preserving the
+runner's registration/configuration state. That state is required for normal
+restart and reconnection, is sensitive credential-bearing material, and
+shall be protected accordingly. It shall survive container recreation and
+have an explicit documented storage boundary independent of job workspace
+data. WP-0.3 selects and validates the implementation mechanism within
+these approved constraints; persistence itself is no longer an open decision.
 
-The currently justified persistent path is:
+The job workspace at:
 
 ``` text
 /actions-runner/_work
 ```
 
-This supports runner job workspace/cache continuity.
+is **disposable by default**. `_work` shall remain logically and
+operationally separate from persistent runner identity/configuration and
+shall never substitute for registration-state persistence.
 
-Runner configuration state shall not be persisted merely as a
-convenience unless doing so is intentionally selected as part of the
-lifecycle design.
+Future performance requirements may evaluate GitHub caching, artifacts,
+or explicit workspace persistence separately. Any technical constraint
+requiring a change to the disposable-by-default architecture shall be
+surfaced for architecture review before implementation.
 
-Persistent storage shall be treated as potentially containing repository
-source, build output, logs, or other workflow data and protected
-accordingly.
+Any retained repository source, build output, logs, caches, or workflow
+data shall also be protected according to its sensitivity. Recovery shall
+never silently delete ambiguous registration/configuration state.
 
 ------------------------------------------------------------------------
 
@@ -528,15 +686,22 @@ primary CI execution record.
 The runner shall be treated as reproducible infrastructure rather than a
 manually curated server.
 
-Recovery should consist of:
+Recovery with valid persisted runner state should consist of:
 
 1.  Rebuild the image from the project source.
 2.  Recreate the container using Compose.
 3.  Supply authorized runtime configuration.
-4.  Register the replacement runner.
+4.  Validate and reuse protected persisted registration/configuration state.
 5.  Validate connectivity.
 6.  Execute the runner test workflow.
-7.  Remove obsolete runner registrations if necessary.
+7.  Confirm no new registration token or runner replacement was required.
+
+Missing state shall not automatically trigger registration. Invalid or
+ambiguous state shall fail closed and require explicit administrative
+recovery. Abnormal termination shall not automatically deregister,
+replace, or delete state. If recovery requires decommission or subsequent
+re-registration, those are separate, explicitly authorized operations
+under Section 11, not ordinary rebuild steps.
 
 Manual modifications inside a running container shall not be considered
 authoritative configuration.
@@ -545,8 +710,10 @@ authoritative configuration.
 
 ## 20. Repository and Source-Control Requirements
 
-The `action-runner` project shall remain separate from application
-repositories.
+The `action-runner` project has its own source repository,
+`scantoria/action-runner`, and shall remain separate from application
+repositories. `scantoria/thisbyte-website` is the initial repository served
+by the runner, not this project's source repository.
 
 Expected root structure:
 
@@ -561,11 +728,20 @@ action-runner/
 ├── .env.example
 ├── .gitignore
 ├── .dockerignore
-└── .gitattributes
+├── .gitattributes
+├── Docs/
+└── _Context/
+    ├── Executions/
+    ├── Reviews/
+    ├── Sessions/
+    └── Work-Packages/
 ```
 
-The project may later be placed in a dedicated private GitHub repository
-after review.
+The governance/artifact directories above already exist. Execution evidence,
+independent reviews, and session records follow the locations and immutable
+artifact rules in `alignment.md`; canonical WP-0.2 and WP-0.3 currently
+reside under `_Context/Work-Packages/`. This structure describes existing
+locations and does not authorize creating, moving, or restoring artifacts.
 
 The following shall never be committed:
 
@@ -576,6 +752,7 @@ The following shall never be committed:
 -   passwords
 -   deployment secrets
 -   generated credentials
+-   credential-bearing runner registration/configuration state
 
 ------------------------------------------------------------------------
 
@@ -636,14 +813,29 @@ until:
 -   [ ] Docker socket is not mounted.
 -   [ ] No unnecessary inbound ports are exposed.
 -   [ ] No credentials exist in the image.
--   [ ] Registration-token lifecycle is approved.
+-   [x] Bootstrap-only registration-token lifecycle and persistent-runner
+    architecture are Owner-approved through WP-0.2 (2026-10-12).
+-   [ ] Exact registration-token acquisition mechanism is approved before use.
+-   [ ] WP-0.3 lifecycle remediation passes local noncredentialed validation
+    and independent review.
+-   [ ] Owner explicitly authorizes runner registration separately.
+-   [ ] Persistent identity/configuration survives container recreation;
+    `_work` is disposable by default and separate from that state.
+-   [ ] Missing, partial, or invalid state fails closed without automatic
+    registration, `--replace`, state deletion, or destructive recovery.
+-   [ ] Registration uses `--disableupdate` and restart policy cannot
+    cause uncontrolled registration loops.
 -   [ ] Runner successfully registers to the intended private
     repository.
 -   [ ] GitHub reports the runner online.
 -   [ ] A harmless test workflow executes successfully on the runner.
--   [ ] Shutdown behavior is tested.
--   [ ] Restart/re-registration behavior is tested.
--   [ ] Deregistration behavior is tested.
+-   [ ] Normal shutdown is tested without deregistration or state deletion.
+-   [ ] Restart/reconnection using persisted identity is tested without
+    a new registration token.
+-   [ ] Abnormal termination and stale-record recovery are tested under
+    explicit administrative control.
+-   [ ] Separately authorized decommission and controlled re-registration
+    behavior are tested independently of normal shutdown.
 -   [ ] Operational instructions are documented.
 
 ------------------------------------------------------------------------
@@ -671,19 +863,25 @@ minimum:
 
 The following decisions intentionally remain open:
 
-1.  Final mechanism for obtaining short-lived GitHub runner registration
-    credentials.
-2.  Whether runner configuration should be ephemeral or partially
-    persistent.
-3.  Long-term dedicated runner host/VM.
-4.  Strategy for workflows that eventually require container-image
+1.  Exact operator/API mechanism for obtaining short-lived repository
+    runner registration tokens; no API, CLI, PAT, GitHub App, or other
+    acquisition mechanism is selected by WP-0.2.
+2.  Long-term dedicated runner host/VM.
+3.  Strategy for workflows that eventually require container-image
     builds.
-5.  Exact artifact retention periods.
-6.  Exact CI branch policy.
-7.  Exact CD promotion policy.
-8.  GitHub environment/protection configuration.
-9.  Deployment release-directory and symlink implementation.
-10. Runner monitoring/alerting requirements.
+4.  Exact artifact retention periods.
+5.  Exact CI branch policy.
+6.  Exact CD promotion policy.
+7.  GitHub environment/protection configuration.
+8.  Deployment release-directory and symlink implementation.
+9.  Runner monitoring/alerting requirements.
+
+WP-0.2 has resolved persistent-runner operation, intentional persistent
+registration/configuration state, disposable-by-default `_work`, and the
+bootstrap-only registration-token lifecycle. Ephemeral runner operation
+remains deferred pending separate future approval; it is not the selected
+initial design. The exact persistence implementation is delegated to
+WP-0.3 within Section 12's boundaries.
 
 These decisions shall be resolved when required rather than prematurely
 expanding privileges or infrastructure.
@@ -692,32 +890,39 @@ expanding privileges or infrastructure.
 
 ## 26. Immediate Next Steps
 
-Following approval of this specification:
+The approved progression is:
 
-1.  Place the approved `alignment.md` in the project root.
-2.  Review the existing implementation against both governance
-    documents.
-3.  Inspect `compose.yaml` and `entrypoint.sh` specifically for
-    lifecycle and secret-handling compliance.
-4.  Resolve the registration-token acquisition design.
-5.  Re-run local build/security validation.
-6.  Authorize runner registration only after the preceding review
-    passes.
-7.  Register the runner to `scantoria/thisbyte-website`.
-8.  Confirm GitHub reports the expected runner identity and labels.
-9.  Execute a harmless CI validation workflow.
-10. Stop and review results before introducing deployment credentials.
+1.  Reconcile `project-specification.md` with approved WP-0.2 and current state.
+2.  Obtain Owner and Chief Architect review of the reconciled specification.
+3.  Resume WP-0.3 implementation/remediation only after that review and
+    resolution of applicable governance prerequisites.
+4.  Complete local noncredentialed lifecycle, build, and security validation.
+5.  Complete independent review with traceable acceptance evidence.
+6.  Obtain the Owner's separate decision on runner-registration authorization
+    and resolve the exact token-acquisition mechanism before use.
+7.  Only if explicitly authorized, perform controlled registration to
+    `scantoria/thisbyte-website` and confirm expected identity, labels,
+    and GitHub Online status.
+8.  Execute harmless CI and the authorized registered lifecycle validation.
+9.  Stop and review results before considering any deployment credentials.
+
+This specification update does not authorize any later step. WP-0.3 remains
+paused pending Owner and Chief Architect review. Token acquisition, runner
+registration, deployment credentials, `station-01` access/modification,
+and production deployment remain unauthorized.
 
 ------------------------------------------------------------------------
 
 ## 27. Definition of the Current Boundary
 
-The immediate objective is **not production deployment**.
+The immediate authorized task is this specification reconciliation and
+its validation, followed by Owner and Chief Architect review. It does not
+include WP-0.3 implementation or production deployment.
 
-The immediate objective is to establish a secure, reproducible,
-repository-scoped GitHub Actions execution environment and prove that
-GitHub can safely dispatch a harmless CI job to the ThisByte-owned
-runner.
+The subsequent project objective is to establish a secure, reproducible,
+persistent, repository-scoped GitHub Actions execution environment and,
+only after separate Owner registration authorization, prove that GitHub
+can safely dispatch a harmless CI job to the ThisByte-owned runner.
 
 Only after that boundary is proven will the project proceed toward
 deployment access to `station-01`.
